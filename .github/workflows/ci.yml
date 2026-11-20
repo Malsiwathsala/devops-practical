@@ -52,4 +52,4 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKERHUB_USERNAME }}/devops-practical:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/devops-practical:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/devops-practical:v1
