@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: devops-practical
+  labels:
+    app: devops-practical
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: devops-practical
+  template:
+    metadata:
+      labels:
+        app: devops-practical
+    spec:
+      containers:
+        - name: flask
+          image: malsiwathsala/devops-practical:v1
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 5000
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
