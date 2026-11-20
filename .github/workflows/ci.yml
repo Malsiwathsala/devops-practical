@@ -53,4 +53,4 @@ jobs:
           push: true
           tags: |
             malsiwathsala/devops-practical:latest
-            malsiwathsala/devops-practical:v1
+            malsiwathsala/devops-practical:v2
