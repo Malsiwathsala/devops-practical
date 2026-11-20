@@ -41,6 +41,12 @@ Configure the repository secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` for 
 
 ## Kubernetes demonstration
 
+The **Minikube Self-Healing** GitHub Actions workflow runs the demonstration on
+a temporary Ubuntu runner. Its run summary records the Service health response,
+the pod names and UIDs before and after deletion, and the final replica count.
+This uses Minikube with the Docker driver on a hosted Linux VM, so Windows and
+WSL are outside the cluster setup.
+
 Once Docker Hub lists `malsiwathsala/devops-practical:v1`, open a
 [Killercoda Kubernetes playground](https://killercoda.com/playgrounds/scenario/kubernetes)
 or use Minikube. In the cluster terminal, clone this repository and run the following

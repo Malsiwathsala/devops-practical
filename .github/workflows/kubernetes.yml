@@ -1,0 +1,72 @@
+name: Minikube Self-Healing
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "k8s/**"
+      - ".github/workflows/kubernetes.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  self-healing:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start Minikube
+        run: |
+          minikube version
+          minikube start --driver=docker
+          minikube kubectl -- get nodes
+      - name: Deploy and verify two ready replicas and Service
+        run: |
+          k() { minikube kubectl -- "$@"; }
+          k apply -f k8s/
+          k rollout status deployment/devops-practical --timeout=180s
+          k port-forward service/devops-practical 8080:80 &
+          forward_pid=$!
+          trap 'kill "$forward_pid" 2>/dev/null || true' EXIT
+          health=$(curl -fsS --retry 15 --retry-connrefused --retry-delay 1 http://127.0.0.1:8080/health)
+          jq -e '.status == "healthy"' <<< "$health"
+          {
+            echo '### Deployment and Service'
+            echo '```text'
+            k get deployment,service,pods -l app=devops-practical
+            echo "$health"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Delete one pod and verify a new UID and two ready replicas
+        run: |
+          k() { minikube kubectl -- "$@"; }
+          pods() { k get pods -l app=devops-practical -o json; }
+          describe_pods() {
+            jq -r '.items[] | [.metadata.name, .metadata.uid, .status.phase] | @tsv'
+          }
+          before=$(pods)
+          victim=$(jq -er '.items[0].metadata.name' <<< "$before")
+          victim_uid=$(jq -er '.items[0].metadata.uid' <<< "$before")
+          survivor_uid=$(jq -er '.items[1].metadata.uid' <<< "$before")
+          deletion=$(k delete pod "$victim" --timeout=60s)
+          k rollout status deployment/devops-practical --timeout=180s
+          after=$(pods)
+          jq -e --arg victim "$victim_uid" --arg survivor "$survivor_uid" '
+            (.items | length) == 2 and
+            all(.items[]; any(.status.conditions[]; .type == "Ready" and .status == "True")) and
+            all(.items[]; .metadata.uid != $victim) and
+            any(.items[]; .metadata.uid == $survivor)
+          ' <<< "$after"
+          {
+            echo '### Pod replacement'
+            echo '```text'
+            echo 'Before deletion (name, UID, phase):'
+            describe_pods <<< "$before"
+            echo "$deletion"
+            echo 'After recovery (name, UID, phase):'
+            describe_pods <<< "$after"
+            k get deployment devops-practical
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
