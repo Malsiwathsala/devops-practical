@@ -4,7 +4,7 @@ A simple Flask web application built for a university DevOps practical assignmen
 
 ## Features
 
-- `/` — Returns `{"message": "Hello, DevOps World! V2", "version": "2.0"}`
+- `/` — Returns `{"message": "CI/CD and Docker Pipeline is a massive success! V2", "version": "2.0"}`
 - `/health` — Returns `{"status": "healthy"}`
 
 ## Tech Stack

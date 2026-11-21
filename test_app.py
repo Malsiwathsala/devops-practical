@@ -21,7 +21,7 @@ def test_home_status_code(client):
 def test_home_message(client):
     response = client.get("/")
     data = response.get_json()
-    assert data["message"] == "Hello, DevOps World! V2"
+    assert data["message"] == "CI/CD and Docker Pipeline is a massive success! V2"
     assert data["version"] == "2.0"
 
 
